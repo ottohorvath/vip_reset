@@ -1,0 +1,6 @@
+-F ${VIP_RESET_SV_HOME}/vip_reset.vc
+
++incdir+./
+./simple_pkg.sv
+./simple_dut.sv
+./simple_tb_top.sv

@@ -1,0 +1,5 @@
++incdir+${VIP_RESET_SV_HOME}/seq
++incdir+${VIP_RESET_SV_HOME}/uvc
+
+${VIP_RESET_SV_HOME}/vip_reset_signal_if.sv
+${VIP_RESET_SV_HOME}/vip_reset_pkg.sv
