@@ -37,12 +37,12 @@ endfunction
 `endif
 
 `ifndef CHK_RAND
-`define CHK_RAND(var, with_c=) \
-    `CHK_FATAL(``var``.randomize ``with_c``,"Randomize failed!")
+`define CHK_RAND(var, with_c) \
+    `CHK_FATAL(``var``.randomize() ``with_c``,"Randomize failed!")
 `endif
 
 `ifndef CHK_STD_RAND
-`define CHK_STD_RAND(vars, with_c=) \
+`define CHK_STD_RAND(vars, with_c) \
     `CHK_FATAL(std::randomize``vars`` ``with_c``,"Randomize failed!")
 `endif
 
