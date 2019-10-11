@@ -6,7 +6,6 @@ class vip_reset_driver extends uvm_driver #(vip_reset_seq_item);
 
     protected virtual vip_reset_signal_if       intf;
     protected vip_reset_agent_configuration     configuration;
-    protected vip_reset_seq_item                item;
     protected bit                               new_item_rcvd;
     protected event                             clock_tick_e;
 
@@ -47,7 +46,7 @@ class vip_reset_driver extends uvm_driver #(vip_reset_seq_item);
             auto_reset_item.request          = configuration.get_auto_reset_type();
             auto_reset_item.before_assertion = 3.0;
             auto_reset_item.during_assertion = 2.0 ;
-            item = auto_reset_item;
+            req = auto_reset_item;
             new_item_rcvd = 1;
         end
         fork
@@ -63,7 +62,7 @@ class vip_reset_driver extends uvm_driver #(vip_reset_seq_item);
     process_incoming_requests();
         forever
         begin
-            seq_item_port.get_next_item(item);
+            seq_item_port.get_next_item(req);
             new_item_rcvd = 1;
             wait (new_item_rcvd == 0);
             seq_item_port.item_done();
@@ -77,47 +76,47 @@ class vip_reset_driver extends uvm_driver #(vip_reset_seq_item);
         forever
         begin
             wait(new_item_rcvd);
-            void'(item.begin_tr());
-            case(item.request)
+            void'(req.begin_tr());
+            case(req.request)
                 vip_reset_types::ASYNC:
                 begin
-                    if (item.before_assertion > 0.0)
+                    if (req.before_assertion > 0.0)
                     begin
-                        # (item.before_assertion);
+                        # (req.before_assertion);
                     end
-                    intf.reset = (configuration.get_reset_active_low()) ? (0):(1);
-                    # (item.during_assertion);
-                    intf.reset = (configuration.get_reset_active_low()) ? (1):(0);
+                    assert_reset();
+                    # (req.during_assertion);
+                    deassert_reset();
                 end
                 vip_reset_types::ASYNC_SYNC:
                 begin
-                    if (item.before_assertion > 0.0)
+                    if (req.before_assertion > 0.0)
                     begin
-                        # (item.before_assertion);
+                        # (req.before_assertion);
                     end
                     if (clock_tick_e.triggered)
                     begin
                         `uvm_warning(`GTN, "Reset assertion coincided with clock tick, nothing is driven out!")
                     end else begin
-                        intf.reset = (configuration.get_reset_active_low()) ? (0):(1);
+                        assert_reset();
                         @ (clock_tick_e);
-                        intf.reset = (configuration.get_reset_active_low()) ? (1):(0);
+                        deassert_reset();
                     end
                 end
                 vip_reset_types::SYNC:
                 begin
                     if (clock_tick_e.triggered)
                     begin
-                        intf.reset = (configuration.get_reset_active_low()) ? (0):(1);
+                        assert_reset();
                     end else begin
                         @ (clock_tick_e);
-                        intf.reset = (configuration.get_reset_active_low()) ? (0):(1);
+                        assert_reset();
                     end
                     @ (clock_tick_e);
-                    intf.reset = (configuration.get_reset_active_low()) ? (1):(0);
+                    deassert_reset();
                 end
             endcase
-            item.end_tr();
+            req.end_tr();
             new_item_rcvd = 0;
         end
     endtask
@@ -132,6 +131,20 @@ class vip_reset_driver extends uvm_driver #(vip_reset_seq_item);
             -> clock_tick_e;
         end
     endtask
+    //==========================================================================
+
+    //==========================================================================
+    protected function void
+    assert_reset();
+        intf.reset = (configuration.get_reset_active_low()) ? (0):(1);
+    endfunction
+    //==========================================================================
+
+    //==========================================================================
+    protected function void
+    deassert_reset();
+        intf.reset = (configuration.get_reset_active_low()) ? (1):(0);
+    endfunction
     //==========================================================================
 endclass
 `endif//VIP_RESET_DRIVER_SV
