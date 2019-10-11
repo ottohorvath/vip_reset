@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
-set -e
+
+set -euo pipefail
 
 sim_mode=-gui
 sim=mti
-#===============================================================================
-VIP_RESET_SV_HOME=${PWD}/../../sv
+
+__sn=`basename $0`
+__pwd=`readlink -f $0 | sed s"|/${__sn}||"`
+
+pushd ${__pwd} > /dev/null
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+VIP_RESET_SV_HOME=${__pwd}/../../sv
 export VIP_RESET_SV_HOME
 
-log_path=${PWD}/run_log_${sim}
-work_path=${PWD}/work_${sim}
+sim_path=${__pwd}/simulation
+log_path=${sim_path}/run_log_${sim}
+work_path=${sim_path}/work_${sim}
 elab_path=${work_path}/elab_${sim}
-tb_vc=${PWD}/`find -name "*.vc"`
-tb_top=`find -name "*tb_top.sv" | sed "s|.sv||" | sed "s|\W*||"`
-tc=`find -name "*test.sv" | sed "s|.sv||" | sed "s|\W*||"`
+
+tb_vc=${__pwd}/simple.vc
+tb_top=simple_tb_top
+tc=simple_test
 
 compile_mti ()
 {
@@ -30,23 +39,16 @@ simulate_mti ()
 }
 
 #===============================================================================
-if [[ -d ${work_path} ]]
-then
-    rm -rf ${work_path}
-fi
 
-# Remove auto generate bullshit
-rm -rf {transcript,work,wlf*,vish*}
+[[ -e ${sim_path} ]] && rm -rf ${sim_path}
 
-if [[ "${sim}" == "mti" ]]
-then
+mkdir -p ${sim_path} && cd ${sim_path}
+
 {
     compile_mti
     elaborate_mti
     simulate_mti
 } 2>&1 | tee ${log_path}
-else
-    echo "Only MTI support is implemented!"
-fi
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-exit 0
+popd > /dev/null
